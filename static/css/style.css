@@ -677,13 +677,14 @@ body {
     justify-content: flex-end;
     margin-top: 0.5rem;
     opacity: 0.8;
+    gap: 0.5rem;
 }
 
 .update-item:hover .update-actions {
     opacity: 1;
 }
 
-.btn-share-tweet {
+.btn-share-tweet, .btn-copy-clipboard {
     background: rgba(255, 255, 255, 0.03);
     color: var(--text-secondary);
     font-size: 0.8rem;
@@ -698,7 +699,13 @@ body {
     border-color: rgba(29, 161, 242, 0.3);
 }
 
-.btn-share-tweet svg {
+.btn-copy-clipboard:hover {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--emerald);
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.btn-share-tweet svg, .btn-copy-clipboard svg {
     width: 14px;
     height: 14px;
 }

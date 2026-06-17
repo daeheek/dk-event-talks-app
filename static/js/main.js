@@ -39,7 +39,10 @@ const elements = {
     modalTweetBtn: document.getElementById('modalTweetBtn'),
     
     // Toasts
-    toastContainer: document.getElementById('toastContainer')
+    toastContainer: document.getElementById('toastContainer'),
+    
+    // CSV Export
+    exportCsvBtn: document.getElementById('exportCsvBtn')
 };
 
 // Initialize Application
@@ -54,6 +57,11 @@ function setupEventListeners() {
     elements.refreshBtn.addEventListener('click', () => {
         fetchReleases(true);
     });
+
+    // Export to CSV Click
+    if (elements.exportCsvBtn) {
+        elements.exportCsvBtn.addEventListener('click', handleExportCSV);
+    }
 
     // Search Input with Debounce
     let searchTimeout;
@@ -90,15 +98,20 @@ function setupEventListeners() {
         renderFeed();
     });
 
-    // Event Delegation for dynamic "Tweet Update" buttons inside feed
+    // Event Delegation for dynamic "Tweet Update" and "Copy" buttons inside feed
     elements.notesFeed.addEventListener('click', (e) => {
-        const btn = e.target.closest('.btn-share-tweet');
-        if (!btn) return;
+        const tweetBtn = e.target.closest('.btn-share-tweet');
+        const copyBtn = e.target.closest('.btn-copy-clipboard');
         
-        const dateStr = btn.getAttribute('data-date');
-        const updateId = btn.getAttribute('data-id');
-        
-        openTweetComposer(dateStr, updateId);
+        if (tweetBtn) {
+            const dateStr = tweetBtn.getAttribute('data-date');
+            const updateId = tweetBtn.getAttribute('data-id');
+            openTweetComposer(dateStr, updateId);
+        } else if (copyBtn) {
+            const dateStr = copyBtn.getAttribute('data-date');
+            const updateId = copyBtn.getAttribute('data-id');
+            handleCopyUpdate(dateStr, updateId, copyBtn);
+        }
     });
 
     // Modal Close handlers
@@ -303,6 +316,13 @@ function renderFeed() {
                             ${up.html}
                         </div>
                         <div class="update-actions">
+                            <button class="btn btn-copy-clipboard" data-date="${entry.date}" data-id="${up.id}" aria-label="Copy update to clipboard">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                                </svg>
+                                <span>Copy</span>
+                            </button>
                             <button class="btn btn-share-tweet" data-date="${entry.date}" data-id="${up.id}" aria-label="Share update on X">
                                 <svg viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
@@ -534,4 +554,109 @@ function showToast(message, type = 'info') {
             toast.remove();
         });
     }, 4000);
+}
+
+// Copy specific update text to clipboard
+async function handleCopyUpdate(dateStr, updateId, buttonElement) {
+    let foundUpdate = null;
+    let parentLink = '';
+    
+    for (const entry of state.releases) {
+        if (entry.date === dateStr) {
+            foundUpdate = entry.updates.find(up => up.id === updateId);
+            parentLink = entry.link || '';
+            break;
+        }
+    }
+    
+    if (!foundUpdate) {
+        showToast('Error finding update text to copy.', 'error');
+        return;
+    }
+    
+    // Format text beautifully for clipboard sharing
+    const formattedText = `BigQuery [${foundUpdate.type}] Update (${dateStr}): ${foundUpdate.text}\n\nInfo: ${parentLink}`;
+    
+    try {
+        await navigator.clipboard.writeText(formattedText);
+        
+        // Show success indicator inside button
+        const originalHtml = buttonElement.innerHTML;
+        buttonElement.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+                <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            <span style="color: #10b981;">Copied!</span>
+        `;
+        buttonElement.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+        buttonElement.style.background = 'rgba(16, 185, 129, 0.05)';
+        
+        setTimeout(() => {
+            buttonElement.innerHTML = originalHtml;
+            buttonElement.style.borderColor = '';
+            buttonElement.style.background = '';
+        }, 2000);
+        
+        showToast('Update content copied to clipboard!', 'success');
+    } catch (err) {
+        console.error('Failed to copy text: ', err);
+        showToast('Failed to copy to clipboard. Please select manually.', 'error');
+    }
+}
+
+// Export currently visible (filtered/searched) release notes to CSV
+function handleExportCSV() {
+    let csvRows = [];
+    
+    // CSV Header row
+    csvRows.push(['Date', 'Category', 'Permalink', 'Description'].map(h => `"${h}"`).join(','));
+    
+    let totalExported = 0;
+    
+    state.releases.forEach(entry => {
+        const filteredUpdates = entry.updates.filter(up => {
+            const matchesFilter = state.activeFilter === 'all' || 
+                                 (state.activeFilter === 'Issue' && (up.type === 'Issue' || up.type === 'Deprecation' || up.type === 'Breaking Change')) ||
+                                 up.type === state.activeFilter;
+                                 
+            const matchesSearch = !state.searchQuery || 
+                                 up.type.toLowerCase().includes(state.searchQuery) || 
+                                 up.text.toLowerCase().includes(state.searchQuery) ||
+                                 entry.date.toLowerCase().includes(state.searchQuery);
+                                 
+            return matchesFilter && matchesSearch;
+        });
+        
+        filteredUpdates.forEach(up => {
+            // Escape double quotes inside text by doubling them per CSV spec
+            const cleanText = up.text.replace(/"/g, '""');
+            const cleanDate = entry.date.replace(/"/g, '""');
+            const cleanType = up.type.replace(/"/g, '""');
+            const cleanLink = (entry.link || '').replace(/"/g, '""');
+            
+            csvRows.push(`"${cleanDate}","${cleanType}","${cleanLink}","${cleanText}"`);
+            totalExported++;
+        });
+    });
+    
+    if (totalExported === 0) {
+        showToast('No updates to export with current filters.', 'error');
+        return;
+    }
+    
+    // Trigger file download
+    const csvString = csvRows.join('\n');
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `bigquery_release_notes_export_${new Date().toISOString().slice(0,10)}.csv`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showToast(`Successfully exported ${totalExported} updates to CSV!`, 'success');
 }
