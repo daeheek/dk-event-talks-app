@@ -36,6 +36,88 @@
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Light Theme Overrides */
+[data-theme="light"] {
+    --bg-dark: #f1f5f9;
+    --bg-panel: rgba(255, 255, 255, 0.75);
+    --bg-panel-solid: #ffffff;
+    --bg-panel-hover: rgba(248, 250, 252, 0.9);
+    
+    --primary: #1a73e8;
+    --primary-glow: rgba(26, 115, 232, 0.15);
+    --primary-hover: #1557b0;
+    
+    --emerald: #047857;
+    --emerald-glow: rgba(4, 120, 87, 0.12);
+    --cyan: #0369a1;
+    --cyan-glow: rgba(3, 105, 161, 0.12);
+    --coral: #be123c;
+    --coral-glow: rgba(190, 18, 60, 0.12);
+    --amber: #b45309;
+    --amber-glow: rgba(180, 83, 9, 0.12);
+    --purple: #6d28d9;
+    --purple-glow: rgba(109, 40, 217, 0.12);
+    
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+    --border: rgba(15, 23, 42, 0.08);
+    --border-hover: rgba(15, 23, 42, 0.16);
+    
+    --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.04);
+    --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.06);
+    --shadow-lg: 0 16px 40px rgba(15, 23, 42, 0.1);
+}
+
+[data-theme="light"] .glow-orb {
+    opacity: 0.05;
+}
+
+[data-theme="light"] .btn-primary {
+    color: white;
+}
+
+[data-theme="light"] .btn-secondary {
+    background: #ffffff;
+    color: var(--text-primary);
+    border-color: var(--border);
+}
+
+[data-theme="light"] .btn-secondary:hover {
+    background: #f8fafc;
+    border-color: var(--border-hover);
+}
+
+[data-theme="light"] .input-wrapper input {
+    background: #ffffff;
+}
+
+[data-theme="light"] .input-wrapper input:focus {
+    background: #ffffff;
+}
+
+[data-theme="light"] .btn-tweet {
+    background: #0f1419;
+    color: #ffffff;
+}
+
+[data-theme="light"] .btn-tweet:hover {
+    background: #272c30;
+}
+
+[data-theme="light"] .tweet-composer-card {
+    background: #ffffff;
+    border-color: var(--border);
+}
+
+[data-theme="light"] .tweet-composer-footer {
+    border-top-color: var(--border);
+}
+
+[data-theme="light"] .modal-container {
+    background: #ffffff;
+}
+
 /* Base Styles */
 * {
     box-sizing: border-box;
@@ -170,6 +252,15 @@ body {
 .btn-secondary:hover {
     background: rgba(255, 255, 255, 0.1);
     border-color: var(--border-hover);
+}
+
+.btn-icon-only {
+    padding: 0.625rem;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .btn-tweet {

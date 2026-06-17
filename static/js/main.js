@@ -42,11 +42,15 @@ const elements = {
     toastContainer: document.getElementById('toastContainer'),
     
     // CSV Export
-    exportCsvBtn: document.getElementById('exportCsvBtn')
+    exportCsvBtn: document.getElementById('exportCsvBtn'),
+    
+    // Theme Toggle
+    themeToggleBtn: document.getElementById('themeToggleBtn')
 };
 
 // Initialize Application
 document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
     setupEventListeners();
     fetchReleases();
 });
@@ -61,6 +65,11 @@ function setupEventListeners() {
     // Export to CSV Click
     if (elements.exportCsvBtn) {
         elements.exportCsvBtn.addEventListener('click', handleExportCSV);
+    }
+
+    // Theme Toggle Click
+    if (elements.themeToggleBtn) {
+        elements.themeToggleBtn.addEventListener('click', toggleTheme);
     }
 
     // Search Input with Debounce
@@ -659,4 +668,39 @@ function handleExportCSV() {
     document.body.removeChild(link);
     
     showToast(`Successfully exported ${totalExported} updates to CSV!`, 'success');
+}
+
+// Initialize Visual Theme
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    updateThemeToggleIcons(savedTheme);
+}
+
+// Toggle Visual Theme (Dark/Light)
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+    
+    updateThemeToggleIcons(newTheme);
+    showToast(`Swapped to ${newTheme} mode!`, 'info');
+}
+
+// Update Theme Toggle SVG display states
+function updateThemeToggleIcons(theme) {
+    const sunIcon = document.querySelector('#themeToggleBtn .sun-icon');
+    const moonIcon = document.querySelector('#themeToggleBtn .moon-icon');
+    
+    if (!sunIcon || !moonIcon) return;
+    
+    if (theme === 'light') {
+        sunIcon.style.display = 'none';
+        moonIcon.style.display = 'block';
+    } else {
+        sunIcon.style.display = 'block';
+        moonIcon.style.display = 'none';
+    }
 }
